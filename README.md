@@ -1,9 +1,39 @@
-# yr-rs
-Simpe CLI to interact with yr.no
+# wxctl
+wxctl is a simpe CLI to interact with weather services and output the result to stdout.
+
+Use cases could be status bars, terminal apps and so on.
+
+## Supported weather services
+- [Open-Meteo](https://open-meteo.com)
 
 
-## Todo
+## Development
+Have Nix, enter folder.
 
-Add support for City/Country and just fail or what ever if it does not exist
-https://geocoding-api.open-meteo.com/v1/search?name=bergen%2C+norway
+The build happens in a different repository, but its possible to build this using
+```nix
+{ pkgs }:
+
+pkgs.rustPlatform.buildRustPackage rec {
+  pname = "wxctl";
+  version = "";
+
+  src = pkgs.fetchFromGitHub {
+    owner = "scav";
+    repo = "wxctl";
+    tag = version;
+    hash = "";
+  };
+
+  nativeBuildInputs = [ pkgs.git ];
+
+  cargoHash = "";
+  cargoLock.lockFile = ./Cargo.lock;
+
+  meta = with pkgs.lib; {
+    description = "CLI tool for interacting with weather services";
+    license = licenses.unlicense;
+  };
+}
+```
 

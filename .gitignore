@@ -1,7 +1,4 @@
 .direnv
 target/
-
-
-# Added by cargo
-
-/target
+result
+result/

@@ -1,6 +1,9 @@
-use std::io::{self, Write};
+#![warn(clippy::all, clippy::pedantic)]
 mod client;
+mod errors;
 use clap::Parser;
+
+use crate::errors::WxError;
 
 #[derive(Parser)]
 #[command(name = "MyApp")]
@@ -16,32 +19,38 @@ struct Cli {
     debug: bool,
 }
 
-fn main() {
-    color_eyre::install().unwrap();
-    let c = Cli::parse();
-    if let (Some(name), Some(country)) = (c.name, c.country) {
-        let loc = client::location::get_lat_long(&name, &country).unwrap();
-        if c.debug {
-            let mut out = io::stderr();
-            _ = writeln!(out, "{:?}", loc);
-        }
-        let weather = client::weather::get_current_weather(loc.latitude, loc.longitude).unwrap();
+fn run(c: &Cli) -> Result<(), WxError> {
+    let name = c.name.as_ref().ok_or(WxError::MissingName)?;
+    let country = c.country.as_ref().ok_or(WxError::MissingCountry)?;
 
-        let mut out = io::stdout();
-        _ = writeln!(
-            out,
-            "{}{}🌡 ({})",
-            weather.current.temperature,
-            weather.current_units.temperature,
-            uppercase_first(&name)
-        );
-    };
+    let location = client::location::get_lat_long(name, country)?;
+
+    if c.debug {
+        eprintln!("{location:?}");
+    }
+
+    let weather = client::weather::get_current_weather(location.latitude, location.longitude)?;
+
+    println!(
+        "{}{}🌡 {}{}  ({}/{})",
+        weather.current.temperature,
+        weather.current_units.temperature,
+        weather.current.humiditiy,
+        weather.current_units.humiditiy,
+        location.name,
+        location.country_code
+    );
+
+    Ok(())
 }
 
-fn uppercase_first(s: &str) -> String {
-    let mut c = s.chars();
-    match c.next() {
-        None => String::new(),
-        Some(f) => f.to_uppercase().collect::<String>() + c.as_str(),
+fn main() {
+    let c = Cli::parse();
+
+    if let Err(e) = run(&c) {
+        if c.debug {
+            eprintln!("{e:?}");
+        }
+        println!("{e}");
     }
 }
