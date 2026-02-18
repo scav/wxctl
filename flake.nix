@@ -27,8 +27,10 @@
               pkgs = import nixpkgs { inherit system; };
               toolchain = fenix.packages.${system}.stable.toolchain;
             in
-            pkgs.mkShell {
-              buildInputs = [ toolchain ];
+            {
+              default = pkgs.mkShell {
+                buildInputs = [ toolchain ];
+              };
             };
         }) systems
       );
