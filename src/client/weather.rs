@@ -1,4 +1,7 @@
-use crate::errors::WxError;
+use crate::{
+    client::{location::LocationApi, open_meteo::OpenMeteo, yr::Yr},
+    errors::WxError,
+};
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
@@ -22,14 +25,43 @@ pub struct WeatherUnits {
     pub humiditiy: String,
 }
 
-pub fn get_current_weather(lat: f32, long: f32) -> Result<Weather, WxError> {
-    let weather: Weather = ureq::get(
-        format!("https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={long}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code"))
-        .call()?
-        .body_mut()
-        .read_json()?;
+#[derive(Debug)]
+pub enum Backend {
+    Yr(Yr),
+    OpenMeteo(OpenMeteo),
+}
 
-    Ok(weather)
+impl WeatherApi for Backend {
+    fn get_current_weather(&self, lat: f32, long: f32) -> Result<Weather, WxError> {
+        match self {
+            Backend::Yr(y) => y.get_current_weather(lat, long),
+            Backend::OpenMeteo(o) => o.get_current_weather(lat, long),
+        }
+    }
+}
+impl LocationApi for Backend {
+    fn get_lat_long(
+        &self,
+        name: &str,
+        country: &str,
+    ) -> Result<super::location::Location, WxError> {
+        match self {
+            Backend::Yr(y) => y.get_lat_long(name, country),
+            Backend::OpenMeteo(o) => o.get_lat_long(name, country),
+        }
+    }
+}
+
+pub trait WeatherApi {
+    fn get_current_weather(&self, lat: f32, long: f32) -> Result<Weather, WxError>;
+    fn temperature_unit(&self, unit: String) -> String {
+        let c = "°C";
+        let f = "°F";
+        if unit != "celsius" {
+            return f.to_string();
+        }
+        c.to_string()
+    }
 }
 
 #[cfg(test)]
