@@ -3,6 +3,7 @@ use std::fmt::{self};
 
 #[derive(Debug)]
 pub enum WxError {
+    InvalidBackend(String),
     Network(ureq::Error),
     Response(ureq::Error),
     EmptyResult,
@@ -18,6 +19,7 @@ impl fmt::Display for WxError {
             WxError::EmptyResult => write!(f, "Empty response"),
             WxError::MissingName => write!(f, "Location name required"),
             WxError::MissingCountry => write!(f, "Country required"),
+            WxError::InvalidBackend(backend) => write!(f, "Invalid backend {}", backend),
         }
     }
 }

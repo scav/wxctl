@@ -3,7 +3,15 @@ mod client;
 mod errors;
 use clap::Parser;
 
-use crate::errors::WxError;
+use crate::{
+    client::{
+        location::LocationApi,
+        open_meteo::OpenMeteo,
+        weather::{Backend, WeatherApi},
+        yr::Yr,
+    },
+    errors::WxError,
+};
 
 #[derive(Parser)]
 #[command(name = "MyApp")]
@@ -17,19 +25,29 @@ struct Cli {
     /// Enable debug logging
     #[arg(short, long)]
     debug: bool,
+    /// Select backend yr|open-meteo.
+    #[arg(short, long = "backend", default_value = "yr")]
+    backend: Option<String>,
 }
 
 fn run(c: &Cli) -> Result<(), WxError> {
     let name = c.name.as_ref().ok_or(WxError::MissingName)?;
     let country = c.country.as_ref().ok_or(WxError::MissingCountry)?;
 
-    let location = client::location::get_lat_long(name, country)?;
+    let client = match c.backend.as_ref().map(String::as_str) {
+        Some("yr") => Ok(Backend::Yr(Yr {})),
+        Some("open-meteo") => Ok(Backend::OpenMeteo(OpenMeteo {})),
+        Some(&_) => Err(WxError::InvalidBackend(c.backend.clone().unwrap())),
+        None => Ok(Backend::Yr(Yr {})),
+    }?;
+
+    let location = client.get_lat_long(name, country)?;
 
     if c.debug {
         eprintln!("{location:?}");
     }
 
-    let weather = client::weather::get_current_weather(location.latitude, location.longitude)?;
+    let weather = client.get_current_weather(location.latitude, location.longitude)?;
 
     println!(
         "{}{}🌡 {}{}  ({}/{})",
