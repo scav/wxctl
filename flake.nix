@@ -11,28 +11,56 @@
   };
 
   outputs =
-    { nixpkgs, fenix, ... }:
+    {
+      self,
+      nixpkgs,
+      fenix,
+      ...
+    }:
     let
       systems = [
         "x86_64-linux"
+        "aarch64-linux"
         "aarch64-darwin"
       ];
+      forAllSystems = f: nixpkgs.lib.genAttrs systems (system: f system);
     in
     {
-      devShells = builtins.listToAttrs (
-        map (system: {
-          name = system;
-          value =
-            let
-              pkgs = import nixpkgs { inherit system; };
-              toolchain = fenix.packages.${system}.stable.toolchain;
-            in
-            {
-              default = pkgs.mkShell {
-                buildInputs = [ toolchain ];
-              };
-            };
-        }) systems
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+          toolchain = fenix.packages.${system}.stable.toolchain;
+        in
+        {
+          default = pkgs.mkShell {
+            buildInputs = [ toolchain ];
+          };
+        }
       );
+
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs { inherit system; };
+        in
+        {
+          default = pkgs.rustPlatform.buildRustPackage {
+            pname = "wxctl";
+            version = "v0.0.2";
+            src = self;
+            cargoHash = "sha256-QSHEVWT7ZRkT889wSesotDAK6jZ3DSf4rYMtyPxZ2i0=";
+            meta = with pkgs.lib; {
+              description = "CLI tool for interacting with weather services";
+              license = licenses.unlicense;
+            };
+          };
+        }
+      );
+
+      hydraJobs = forAllSystems (system: {
+        wxctl = self.packages.${system}.default;
+      });
+
     };
 }
