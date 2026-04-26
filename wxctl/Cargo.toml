@@ -1,0 +1,8 @@
+[package]
+name = "wxctl"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+wx = { path = "../wx" }
+clap = { version = "4.5", default-features = false, features = ["derive", "help", "std"] }

@@ -1,9 +1,7 @@
 #![warn(clippy::all, clippy::pedantic)]
-mod client;
-mod errors;
 use clap::Parser;
 
-use crate::{
+use wx::{
     client::{
         location::LocationApi,
         open_meteo::OpenMeteo,

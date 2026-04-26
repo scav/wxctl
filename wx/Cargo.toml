@@ -1,0 +1,8 @@
+[package]
+name = "wx"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+ureq = { workspace = true }
+serde = { workspace = true }

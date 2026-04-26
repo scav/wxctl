@@ -38,7 +38,6 @@
           };
         }
       );
-
       packages = forAllSystems (
         system:
         let
@@ -47,9 +46,9 @@
         {
           default = pkgs.rustPlatform.buildRustPackage {
             pname = "wxctl";
-            version = "v0.0.2";
+            version = "v0.0.3";
             src = self;
-            cargoHash = "sha256-QSHEVWT7ZRkT889wSesotDAK6jZ3DSf4rYMtyPxZ2i0=";
+            cargoHash = "sha256-2uQzqZl0EVHF3zSsV5fJaPDFn09cTVYBQ6/Kq7aeU+I=";
             meta = with pkgs.lib; {
               description = "CLI tool for interacting with weather services";
               license = licenses.unlicense;
