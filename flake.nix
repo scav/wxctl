@@ -8,12 +8,14 @@
       url = "github:nix-community/fenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    crane.url = "github:ipetkov/crane";
   };
 
   outputs =
     {
       self,
       nixpkgs,
+      crane,
       fenix,
       ...
     }:
@@ -31,10 +33,11 @@
         let
           pkgs = import nixpkgs { inherit system; };
           toolchain = fenix.packages.${system}.stable.toolchain;
+          craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
         in
         {
-          default = pkgs.mkShell {
-            buildInputs = [ toolchain ];
+          default = craneLib.devShell {
+            buildInputs = [ ];
           };
         }
       );
@@ -42,18 +45,47 @@
         system:
         let
           pkgs = import nixpkgs { inherit system; };
+          inherit (pkgs) lib;
+
+          toolchain = fenix.packages.${system}.stable.toolchain;
+          craneLib = (crane.mkLib pkgs).overrideToolchain toolchain;
+          src = craneLib.cleanCargoSource ./.;
+
+          commonArgs = {
+            inherit src;
+            strictDeps = true;
+          };
+
+          cargoArtifacts = craneLib.buildDepsOnly commonArgs;
+
+          individualCrateArgs = commonArgs // {
+            inherit cargoArtifacts;
+            inherit (craneLib.crateNameFromCargoToml { inherit src; }) version;
+            doCheck = false;
+          };
+
+          fileSetForCrate =
+            crate:
+            lib.fileset.toSource {
+              root = ./.;
+              fileset = lib.fileset.unions [
+                ./Cargo.toml
+                ./Cargo.lock
+                (craneLib.fileset.commonCargoSources ./wx)
+                (craneLib.fileset.commonCargoSources crate)
+              ];
+            };
+          wxctl = craneLib.buildPackage (
+            individualCrateArgs
+            // {
+              pname = "wxctl";
+              cargoExtraArgs = "-p wxctl";
+              src = fileSetForCrate ./wxctl;
+            }
+          );
         in
         {
-          default = pkgs.rustPlatform.buildRustPackage {
-            pname = "wxctl";
-            version = "v0.0.3";
-            src = self;
-            cargoHash = "sha256-2uQzqZl0EVHF3zSsV5fJaPDFn09cTVYBQ6/Kq7aeU+I=";
-            meta = with pkgs.lib; {
-              description = "CLI tool for interacting with weather services";
-              license = licenses.unlicense;
-            };
-          };
+          default = wxctl;
         }
       );
 
