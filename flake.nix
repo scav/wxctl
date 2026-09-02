@@ -48,7 +48,7 @@
             pname = "wxctl";
             version = "v0.0.3";
             src = self;
-            cargoHash = "sha256-2uQzqZl0EVHF3zSsV5fJaPDFn09cTVYBQ6/Kq7aeU+I=";
+            cargoLock.lockFile = ./Cargo.lock;
             meta = with pkgs.lib; {
               description = "CLI tool for interacting with weather services";
               license = licenses.unlicense;
