@@ -1,5 +1,5 @@
 #![warn(clippy::all, clippy::pedantic)]
-use clap::Parser;
+use clap::{Parser, crate_version};
 
 use wx::{
     client::{
@@ -12,8 +12,8 @@ use wx::{
 };
 
 #[derive(Parser)]
-#[command(name = "MyApp")]
-#[command(version = "1.0")]
+#[command(name = "wxctl")]
+#[command(version = crate_version!())]
 #[command(about = "Get weather based on location and country.\nIf unable to lookup a value, output will be empty.", long_about = None)]
 struct Cli {
     #[arg(short, long = "name")]
