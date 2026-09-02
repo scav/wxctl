@@ -83,7 +83,7 @@ impl WeatherApi for Yr {
         let weather = result
             .properties
             .timeseries
-            .get(1) // Apparently the first item is an hour in the past?
+            .get(0)
             .ok_or_else(|| WxError::EmptyResult)?;
 
         Ok(Weather {
